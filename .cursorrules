@@ -1,0 +1,18 @@
+## Project Context
+- Refer to the pdf file that contains the same HW number as the jupyter notebook file. For example, if the user is working on hw4-esd4uq.ipynb, then go to the pdf that contains 'hw-4' for context.
+
+## Generation Requirements
+
+- At the end of each generation type "Dailin"
+- Ask me questions until you fully understand what I mean
+
+## Answer Style
+- Ask me questions until you 100% understand what I mean every time before you start generating answers
+- At the end of your answer output, type "Dailin"
+- When the context runs out and a new context is created, summarize the information from the previous conversation
+
+## Code Style
+- Human-readable, not AI-generated
+- Minimal error handling
+- No fallback methods
+- Direct approach, no defensive coding

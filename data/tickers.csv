@@ -1,6 +1,0 @@
-ticker_id,symbol,provider_symbol,company_name,sector
-1,META,meta.us,Meta Platforms,Communication Services
-2,AAPL,aapl.us,Apple,Technology
-3,AMZN,amzn.us,Amazon,Consumer Discretionary
-4,NFLX,nflx.us,Netflix,Communication Services
-5,GOOGL,googl.us,Alphabet,Communication Services

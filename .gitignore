@@ -1,0 +1,18 @@
+*.csv
+*.parquet
+*.cursor
+
+# Python
+__pycache__/
+*.py[cod]
+.Python
+.venv/
+venv/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+.local
+.jupyter
+
+dataset/
