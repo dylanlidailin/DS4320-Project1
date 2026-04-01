@@ -1,15 +1,15 @@
-# DS 4320 Project 1: Next-Day S&P 500 Return Direction Modeling (Relational D1)
+# DS 4320 Project 1: Next-Day S&P 500 Return Direction Modeling
 
 ## Executive Summary
 
-This repository contains Project 1 for DS 4320: a relational dataset (D1) with **four normalized tables** (tickers, daily_prices, daily_features, calendar), each exported as **CSV and Parquet**. D1 covers a **large S&P 500 universe** back to 1995 from Stooq (see `[data/sp500_universe_stooq_candidates.csv](data/sp500_universe_stooq_candidates.csv)`); regenerated files are **over 1 GB combined** and should be **hosted on UVA OneDrive** (link below), not committed to GitHub. The Python pipeline loads **CSV** into **DuckDB**, runs SQL joins, fits a pooled **Logistic Regression** (`statsmodels.Logit`) to predict next-day return direction (up/down), and visualizes log-odds factor coefficients with 95 % confidence intervals for factor significance analysis.
+This repository contains Project 1 for DS 4320: a relational dataset (D1) with **four normalized tables** (tickers, daily_prices, daily_features, calendar), each exported as **CSV and Parquet**. D1 covers a **large S&P 500 universe** back to 1995 from Stooq (see `[data/sp500_universe_stooq_candidates.csv](data/sp500_universe_stooq_candidates.csv)`); regenerated files are **over 1 GB combined** and should be **hosted on UVA OneDrive** (link below), not committed to GitHub. The Python pipeline loads **CSV** into **DuckDB**, runs SQL joins, fits a pooled **Logistic Regression** (`statsmodels.Logit`) on five technical-indicator features to predict next-day return direction (up/down), and visualizes log-odds factor coefficients with 95 % confidence intervals for factor significance analysis.
 
 Name: Dailin Li  
 NetID: esd4uq  
-DOI: placeholder - add Zenodo or Figshare DOI when published
+DOI: https://doi.org/10.5281/zenodo.19363136
 Press release: [press_release.md](press_release.md)  
-Data (CSV + Parquet): [Link to the UVA Onedrive](https://myuva-my.sharepoint.com/:f:/g/personal/esd4uq_virginia_edu/IgCDxaIa4zERSKLURXKSjxkXAVPPBxN1ofQ0FZzqh9AaWfM?e=VWCCbM)  
-Pipeline: [pipeline/project1_pipeline.ipynb](pipeline/project1_pipeline.ipynb) · [Markdown export](pipeline/project1_pipeline.md) - placeholder - add Markdown export when published
+Data (CSV + Parquet): https://myuva-my.sharepoint.com/:f:/g/personal/esd4uq_virginia_edu/IgCDxaIa4zERSKLURXKSjxkXAVPPBxN1ofQ0FZzqh9AaWfM?e=VWCCbM  
+Pipeline: [pipeline/project1_pipeline.ipynb](pipeline/project1_pipeline.ipynb) · [Markdown export](pipeline/project1_pipeline.md)
 License: [LICENSE](LICENSE) (MIT)
 
 **Environment:** `pip install -r requirements.txt` (includes `pyarrow` for Parquet export in `build_project1_data.py`).
@@ -22,7 +22,7 @@ The general problem is how to forecast stock prices. Specifically, we predict wh
 
 ### Item 2 — Rationale for refinement
 
-Narrowing the problem from "stock forecasting" to "next-day return regression on an S&P 500 universe using a relational feature dataset" makes it more tractable and reproducible. OLS linear regression produces interpretable coefficient estimates alongside standard errors and exact 95 % confidence intervals (\(\hat{\beta} \pm 1.96 \cdot \text{SE}\)), making it straightforward to assess which technical-indicator features have statistically meaningful associations with future returns. We construct a relational dataset (D1) with four normalized tables (tickers, daily_prices, daily_features, calendar) and train a model using lagged price-based features: 1-day return, 5-day rolling volatility, 5- and 20-day moving average deviations, 20-day momentum, and volume percent change. A strict date-based train/test split prevents look-ahead bias.
+Narrowing the problem from "stock forecasting" to "next-day return direction classification across an S&P 500 universe using a relational feature dataset" makes it more tractable and reproducible. Logistic regression produces interpretable log-odds coefficient estimates alongside standard errors and exact 95 % confidence intervals (\(\hat{\beta} \pm 1.96 \cdot \text{SE}\)), making it straightforward to assess which technical-indicator features have statistically meaningful associations with next-day return direction. We construct a relational dataset (D1) with four normalized tables (tickers, daily_prices, daily_features, calendar) and train a model using five lagged price-based features: 1-day return, 5-day rolling volatility, 5- and 20-day moving average deviations, and volume percent change. A strict date-based train/test split prevents look-ahead bias.
 
 ### Item 3 — Motivation
 
@@ -30,7 +30,7 @@ Equity return forecasting is one of the most studied problems in finance, yet it
 
 ### Item 4 — Press release headline and link
 
-**Headline:** [Simple Price Signals Can Forecast Next-Day S&P500 Returns — With Limits](press_release.md)
+**Headline:** [Moving-Average Deviations Are the Only Statistically Significant Predictors of Next-Day Return Direction Across the S&P 500](press_release.md)
 
 ---
 
@@ -91,12 +91,12 @@ The feature table is derived from prices using lagged return, rolling volatility
 | build_project1_data.py    | Downloads Stooq daily OHLCV for `tech_universe_stooq.csv`, builds D1 (four tables as CSV + Parquet), exits with error if combined size < 1 GB. | [build_project1_data.py](data/build_project1_data.py)       |
 | build_project1_data.ipynb | Same pipeline for **Google Colab** (upload `tech_universe_stooq.csv`, set `OUT_DIR` if needed).                                                | [build_project1_data.ipynb](data/build_project1_data.ipynb) |
 | tech_universe_stooq.csv   | Curated Stooq `.us` symbols and metadata used to scale D1.                                                                                     | [tech_universe_stooq.csv](data/tech_universe_stooq.csv)     |
-| project1_pipeline.ipynb   | Loads CSV tables into DuckDB, runs SQL joins, fits a baseline linear model, plots coefficients.                                                | [project1_pipeline.ipynb](pipeline/project1_pipeline.ipynb) |
+| project1_pipeline.ipynb   | Loads CSV tables into DuckDB, runs SQL joins, fits a pooled Logistic Regression on five features, plots log-odds coefficients with 95 % CIs.  | [project1_pipeline.ipynb](pipeline/project1_pipeline.ipynb) |
 
 
 ### Item 3 — Bias identification
 
-Using an S&P 500-style universe can introduce bias because the constituent list is not the full equity market and can embed survivorship/selection effects depending on how the list is constructed. The period (2019-2024) contains unusual market regimes (pandemic crash/rebound, rate shocks), which can distort learned relationships. Data source conventions also matter: vendor-specific handling of splits, bad ticks, and symbol mapping can introduce systematic differences. Finally, engineered features based only on price/volume exclude fundamentals, macro variables, and news flow, which can create omitted-variable bias in downstream modeling.
+Using an S&P 500-style universe can introduce bias because the constituent list is not the full equity market and can embed survivorship/selection effects depending on how the list is constructed. The period covered (1995–2024) spans multiple market regimes (dot-com boom/bust, 2008 financial crisis, pandemic crash/rebound, rate shocks), which can distort learned relationships across subperiods. Data source conventions also matter: vendor-specific handling of splits, bad ticks, and symbol mapping can introduce systematic differences. Finally, engineered features based only on price/volume exclude fundamentals, macro variables, and news flow, which can create omitted-variable bias in downstream modeling.
 
 ### Item 4 — Bias mitigation
 
@@ -104,23 +104,13 @@ I mitigate these biases by using strict time-based train/test splits (past to fu
 
 ### Item 5 — Rationale and uncertainty
 
-*wenti - what counts as numerical uncertainty* CI!
-
 Key judgement calls were: (1) using Stooq as a free reproducible source, (2) using an S&P 500-style universe for scale and interpretability, (3) setting the date window to 1995-2024, and (4) creating a normalized four-table schema instead of one flat file. I also explicitly chose a simple technical-indicator feature set and a next-day-return target so the pipeline remains transparent and reproducible.
 
 Main uncertainty comes from market non-stationarity (relationships change over time), potential vendor differences in historical pricing conventions, and sensitivity of short-horizon return models to feature definitions and split boundaries.
 
 ## Metadata
 
-### Item 1 — Logical schema (tables and keys)
-
-
-| Table            | Primary key   | Key relationships                                                          |
-| ---------------- | ------------- | -------------------------------------------------------------------------- |
-| `tickers`        | `ticker_id`   | Parent table for symbols used by `daily_prices` and `daily_features`.      |
-| `daily_prices`   | `price_id`    | `ticker_id` → `tickers.ticker_id`; one row per symbol-date trading record. |
-| `daily_features` | `price_id`    | `price_id` → `daily_prices.price_id`; derived features per trading row.    |
-| `calendar`       | `calendar_id` | Date dimension keyed by `trade_date` for time-based slicing.               |
+[ER Diagram](ER.png)
 
 
 ### Item 2 — Data table (CSVs)
@@ -136,7 +126,7 @@ Main uncertainty comes from market non-stationarity (relationships change over t
 
 ### Item 3 — Data dictionary
 
-See the full table in `[HW8/hw8-esd4uq.ipynb](../HW8/hw8-esd4uq.ipynb)` §8.2 Metadata Item 3, or the same columns documented inline in the pipeline notebook. Features include: `ticker_id`, `symbol`, `provider_symbol`, `company_name`, `sector`, `price_id`, `trade_date`, OHLCV, `adj_close_price`, `return_1d`, `volatility_5d`, `ma_5`, `ma_20`, `ma_5_dev`, `ma_20_dev`, `volume_pct_change`, `target_return_next_day`, and calendar fields.
+All column definitions are documented inline in [`pipeline/project1_pipeline.ipynb`](pipeline/project1_pipeline.ipynb). Features include: `ticker_id`, `symbol`, `provider_symbol`, `company_name`, `sector`, `price_id`, `trade_date`, OHLCV fields, `adj_close_price`, `return_1d`, `volatility_5d`, `ma_5`, `ma_20`, `ma_5_dev`, `ma_20_dev`, `volume_pct_change`, `target_return_next_day`, and calendar fields.
 
 ### Item 4 — Numerical uncertainty
 
@@ -164,10 +154,31 @@ See the full table in `[HW8/hw8-esd4uq.ipynb](../HW8/hw8-esd4uq.ipynb)` §8.2 Me
 | Markdown export | [pipeline/project1_pipeline.md](pipeline/project1_pipeline.md) *(generated via `jupyter nbconvert --to markdown`)* |
 | DuckDB load     | See first code cells in the notebook                                                                               |
 | SQL queries     | Example joins and filters in the notebook                                                                          |
-| Model           | `statsmodels.Logit` on 6 lagged technical features (pooled — factor significance analysis)                                                          |
+| Model           | `statsmodels.Logit` on 5 lagged technical features (pooled — factor significance analysis)                                                          |
 | Visualization   | Log-odds factor significance forest plot with 95 % CIs                                                                          |
 
+---
 
-**Homework copy:** The same pipeline logic also appears in `[HW8/hw8-esd4uq.ipynb](../HW8/hw8-esd4uq.ipynb)` under `# 8.2 Project 1` for course submission.
+## Rubric Walkthrough
 
-- Mint a **DOI** (e.g. Zenodo) and replace the placeholder above  
+This section tells a grader exactly where each deliverable lives.
+
+**General.** The repository is at `https://github.com/dylanlidailin/DS4320-Project1`. The UVA OneDrive data link appears both in the header block above and in the [Data](#data) section at the bottom of this README. This README itself satisfies the header-structure requirement.
+
+**Coding standards.** Python code lives in [`data/build_project1_data.py`](data/build_project1_data.py) and [`pipeline/project1_pipeline.ipynb`](pipeline/project1_pipeline.ipynb). SQL queries run inside the pipeline notebook via DuckDB. Inline comments, error handling (`try`/`except`), and file-based logging (written to `pipeline/logs/project1_pipeline.log`) are all implemented in the notebook's setup and modeling cells.
+
+**Project details (L1 header).** Title, Name, NetID, DOI, press release link, OneDrive data link, pipeline link, and MIT license link are all in the header block at the top of this README.
+
+**Problem definition (L2 header).** The [Problem Definition](#problem-definition) section contains: (1) the initial general problem ("Forecasting stock prices") narrowed to next-day return direction classification across the S&P 500; (2) the rationale for that refinement; (3) the motivation paragraph; and (4) the press release headline with a link to [`press_release.md`](press_release.md).
+
+**Domain exposition (L2 header).** The [Domain Exposition](#domain-exposition) section contains the terminology table, domain paragraph, and background readings summary table. The five reading PDFs live in [`Background_reading/`](Background_reading/).
+
+**Data creation (L2 header).** The [Data Creation](#data-creation) section contains the provenance paragraph, code table (build scripts and pipeline notebook), bias identification, bias mitigation, and rationale for key judgement calls. The build script is [`data/build_project1_data.py`](data/build_project1_data.py).
+
+**Metadata (L2 header).** The [Metadata](#metadata) section contains the ER diagram ([`ER.png`](ER.png)), the data table linking all four CSVs, the data dictionary, and the numerical uncertainty table.
+
+**Press release (separate markdown file).** [`press_release.md`](press_release.md) contains all five required sections: Headline (L1), Hook (L2), Problem Statement (L2), Solution Description (L2, plain-language), and Chart (L2, embedded forest plot).
+
+**Data (UVA OneDrive).** Four relational tables (`tickers`, `daily_prices`, `daily_features`, `calendar`) stored as CSV and Parquet, combined over 1 GB, are hosted at the [OneDrive link](https://myuva-my.sharepoint.com/:f:/g/personal/esd4uq_virginia_edu/IgCDxaIa4zERSKLURXKSjxkXAVPPBxN1ofQ0FZzqh9AaWfM?e=VWCCbM) above.
+
+**Problem solution pipeline (separate files).** The notebook [`pipeline/project1_pipeline.ipynb`](pipeline/project1_pipeline.ipynb) covers every pipeline rubric item: DuckDB CSV load, SQL joins, model implementation (`statsmodels.Logit`), analysis rationale and complexity cells, forest-plot visualization, visualization rationale, and the "pipeline solves the problem" summary cell. The Markdown export lives at [`pipeline/project1_pipeline.md`](pipeline/project1_pipeline.md).

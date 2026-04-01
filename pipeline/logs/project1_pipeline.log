@@ -1,0 +1,10 @@
+2026-03-31 23:37:22 INFO Logging to /Users/dylanli/DS4320-Project1/pipeline/logs/project1_pipeline.log
+2026-03-31 23:37:22 INFO Resolved DATA_DIR: /Users/dylanli/DS4320-Project1/data
+2026-03-31 23:37:24 INFO DuckDB: loaded CSVs from /Users/dylanli/DS4320-Project1/data
+2026-03-31 23:37:26 INFO Rows joined=2759759 train=100000 test=124686 accuracy=0.521775 mean_p_up=0.511095
+2026-03-31 23:37:26 INFO Saved figure to /Users/dylanli/DS4320-Project1/pipeline/logit_factor_ci.png
+2026-03-31 23:44:11 INFO Logging to /Users/dylanli/DS4320-Project1/pipeline/logs/project1_pipeline.log
+2026-03-31 23:44:11 INFO Resolved DATA_DIR: /Users/dylanli/DS4320-Project1/data
+2026-03-31 23:44:14 INFO DuckDB: loaded CSVs from /Users/dylanli/DS4320-Project1/data
+2026-03-31 23:44:17 INFO Rows joined=2759759 train=100000 test=124686 accuracy=0.521775 mean_p_up=0.511095
+2026-03-31 23:44:17 INFO Saved figure to /Users/dylanli/DS4320-Project1/pipeline/logit_factor_ci.png

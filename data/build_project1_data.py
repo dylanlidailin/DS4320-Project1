@@ -1,8 +1,5 @@
 """Build D1 (four relational tables) from Stooq bulk daily files.
 
-Reads a universe CSV and loads daily OHLCV from local Stooq bulk dumps under
-``Data/data/daily/us/...`` (downloaded from the Stooq bulk database page).
-
 Writes CSV and Parquet for each table. Upload generated files to UVA OneDrive (see README).
 
 Requires: pandas, pyarrow, tqdm
@@ -27,11 +24,14 @@ UNIVERSE_CSV = OUT_DIR / "sp500_universe_stooq_candidates.csv"
 # Separate log so runs do not overwrite ``build_project1_data.log``
 LOG_FILE = OUT_DIR / "build_project1_data.log"
 
+# Limiting the data to a specific date range
 START_DATE = pd.Timestamp("1995-01-01")
 END_DATE = pd.Timestamp("2024-12-31")
 MIN_TOTAL_BYTES = 1_000_000_000
 
 SLEEP_SEC = 0.5
+
+# Creating four tables
 
 OUTPUT_TABLES = ("tickers", "daily_prices", "daily_features", "calendar")
 
@@ -63,6 +63,7 @@ BULK_ROOTS = (
 
 
 def build_file_map() -> dict[str, Path]:
+    """Map Stooq provider symbol (lowercase stem) to bulk daily .txt path under BULK_ROOTS."""
     m: dict[str, Path] = {}
     for root in BULK_ROOTS:
         for path in root.rglob("*.txt"):
@@ -73,7 +74,9 @@ def build_file_map() -> dict[str, Path]:
 
 
 def load_bulk_daily(provider_symbol: str, file_map: dict[str, Path]) -> pd.DataFrame:
+    """Load one symbol's Stooq daily OHLCV table from disk via file_map; fail if missing or empty."""
     path = file_map.get(provider_symbol.strip().lower())
+    # Error handling for missing bulk file
     if not path:
         raise FileNotFoundError("missing bulk file")
     if path.stat().st_size == 0:
@@ -209,6 +212,7 @@ def main() -> None:
     )
     daily_prices.insert(0, "price_id", range(1, len(daily_prices) + 1))
 
+    # Creating the daily_features table
     daily_features = daily_prices[
         [
             "price_id",
@@ -268,7 +272,7 @@ def main() -> None:
     daily_features["momentum_20d"] = daily_features["adj_close_price"] / daily_features[
         "ma_20"
     ] - 1
-
+    # Calculating the deviation of the close price from the moving averages
     daily_features["ma_5_dev"] = (
         daily_features["adj_close_price"] - daily_features["ma_5"]
     ) / daily_features["ma_5"]
@@ -281,18 +285,19 @@ def main() -> None:
     daily_features["ma_200_dev"] = (
         daily_features["adj_close_price"] - daily_features["ma_200"]
     ) / daily_features["ma_200"]
-
+    # Calculating the percentage change in volume
     daily_features["volume_pct_change"] = daily_features.groupby("ticker_id")[
         "volume"
     ].pct_change()
-
+    # Calculating the z-score of the volume
     vol_mean_20 = by_ticker["volume"].rolling(20).mean().reset_index(level=0, drop=True)
     vol_std_20 = by_ticker["volume"].rolling(20).std().reset_index(level=0, drop=True)
     daily_features["volume_zscore_20d"] = (daily_features["volume"] - vol_mean_20) / vol_std_20
-
+    # Calculating the target return for the next day
     daily_features["target_return_next_day"] = by_ticker["return_1d"].shift(-1)
 
     daily_features = daily_features.replace([float("inf"), float("-inf")], pd.NA)
+    # Selecting the columns we want to keep
     daily_features = daily_features[
         [
             "price_id",
